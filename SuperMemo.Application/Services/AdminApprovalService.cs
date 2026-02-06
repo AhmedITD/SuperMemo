@@ -30,9 +30,7 @@ public class AdminApprovalService(ISuperMemoDbContext db, IAuditEventLogger audi
             .Select(u => new UserApprovalListItemResponse
             {
                 Id = u.Id,
-                FirstName = u.FirstName,
-                LastName = u.LastName,
-                Email = u.Email,
+                FullName = u.FullName,
                 Phone = u.Phone,
                 KycStatus = u.KycStatus,
                 KybStatus = u.KybStatus,
@@ -55,9 +53,7 @@ public class AdminApprovalService(ISuperMemoDbContext db, IAuditEventLogger audi
             .Select(u => new UserApprovalListItemResponse
             {
                 Id = u.Id,
-                FirstName = u.FirstName,
-                LastName = u.LastName,
-                Email = u.Email,
+                FullName = u.FullName,
                 Phone = u.Phone,
                 KycStatus = u.KycStatus,
                 KybStatus = u.KybStatus,

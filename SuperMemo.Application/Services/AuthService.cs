@@ -22,32 +22,91 @@ public class AuthService(
 {
     public async Task<ApiResponse<RegisterResponse>> Register(RegisterRequest request, CancellationToken cancellationToken = default)
     {
-        var normalizedEmail = request.Email.Trim().ToLowerInvariant();
-        if (await dbContext.Users.AnyAsync(u => u.Email == normalizedEmail, cancellationToken))
-            return ApiResponse<RegisterResponse>.ErrorResponse("Email already exists.", code: ErrorCodes.EmailAlreadyExists);
+        var phone = request.Phone?.Trim();
+        if (string.IsNullOrEmpty(phone))
+            return ApiResponse<RegisterResponse>.ErrorResponse("Phone is required for registration.");
+        if (string.IsNullOrWhiteSpace(request.VerificationCode))
+            return ApiResponse<RegisterResponse>.ErrorResponse("Verification code is required.");
+
+        var verification = await dbContext.PhoneVerificationCodes
+            .Where(v => v.PhoneNumber == phone && v.Code == request.VerificationCode && !v.IsUsed && v.ExpiresAt > DateTime.UtcNow)
+            .OrderByDescending(v => v.CreatedAt)
+            .FirstOrDefaultAsync(cancellationToken);
+        if (verification == null)
+            return ApiResponse<RegisterResponse>.ErrorResponse("Invalid or expired verification code.", code: ErrorCodes.InvalidVerificationCode);
+
+        if (await dbContext.Users.AnyAsync(u => u.Phone == phone, cancellationToken))
+            return ApiResponse<RegisterResponse>.ErrorResponse("Phone number already registered.", code: ErrorCodes.PhoneAlreadyExists);
 
         var user = new User
         {
-            FirstName = request.FirstName,
-            LastName = request.LastName,
-            Email = normalizedEmail,
-            Phone = string.IsNullOrWhiteSpace(request.Phone) ? null : request.Phone.Trim(),
+            FullName = request.FullName.Trim(),
+            Phone = phone,
             PasswordHash = passwordService.HashPassword(request.Password),
-            Role = UserRole.Customer
+            Role = UserRole.Customer,
+            ImageUrl = string.IsNullOrWhiteSpace(request.ImageUrl) ? null : request.ImageUrl.Trim()
         };
 
         dbContext.Users.Add(user);
         await dbContext.SaveChangesAsync(cancellationToken);
 
+        if (request.IcDocument != null)
+        {
+            dbContext.IcDocuments.Add(new IcDocument
+            {
+                UserId = user.Id,
+                IdentityCardNumber = request.IcDocument.IdentityCardNumber,
+                FullName = request.IcDocument.FullName,
+                MotherFullName = request.IcDocument.MotherFullName,
+                BirthDate = request.IcDocument.BirthDate,
+                BirthLocation = request.IcDocument.BirthLocation,
+                ImageUrl = string.IsNullOrWhiteSpace(request.IcDocument.ImageUrl) ? null : request.IcDocument.ImageUrl.Trim(),
+                Status = KycDocumentStatus.Pending
+            });
+        }
+        if (request.PassportDocument != null)
+        {
+            dbContext.PassportDocuments.Add(new PassportDocument
+            {
+                UserId = user.Id,
+                PassportNumber = request.PassportDocument.PassportNumber,
+                FullName = request.PassportDocument.FullName,
+                ShortName = string.IsNullOrWhiteSpace(request.PassportDocument.ShortName) ? null : request.PassportDocument.ShortName.Trim(),
+                Nationality = request.PassportDocument.Nationality,
+                BirthDate = request.PassportDocument.BirthDate,
+                MotherFullName = request.PassportDocument.MotherFullName,
+                ExpiryDate = request.PassportDocument.ExpiryDate,
+                ImageUrl = string.IsNullOrWhiteSpace(request.PassportDocument.ImageUrl) ? null : request.PassportDocument.ImageUrl.Trim(),
+                Status = KycDocumentStatus.Pending
+            });
+        }
+        if (request.LivingIdentityDocument != null)
+        {
+            dbContext.LivingIdentityDocuments.Add(new LivingIdentityDocument
+            {
+                UserId = user.Id,
+                SerialNumber = request.LivingIdentityDocument.SerialNumber,
+                FullFamilyName = request.LivingIdentityDocument.FullFamilyName,
+                LivingLocation = request.LivingIdentityDocument.LivingLocation,
+                FormNumber = request.LivingIdentityDocument.FormNumber,
+                ImageUrl = string.IsNullOrWhiteSpace(request.LivingIdentityDocument.ImageUrl) ? null : request.LivingIdentityDocument.ImageUrl.Trim(),
+                Status = KycDocumentStatus.Pending
+            });
+        }
+
+        verification.IsUsed = true;
+        verification.VerifiedAt = DateTime.UtcNow;
+        await dbContext.SaveChangesAsync(cancellationToken);
+
         var (refreshToken, refreshExpiresAt) = await refreshTokenService.CreateAsync(user.Id, cancellationToken: cancellationToken);
+        var (token, tokenExpiresAt) = tokenGenerator.GenerateToken(user);
         var response = new RegisterResponse
         {
             Id = user.Id,
-            FirstName = user.FirstName,
-            LastName = user.LastName,
-            Email = user.Email,
+            FullName = user.FullName,
             Phone = user.Phone,
-            Token = tokenGenerator.GenerateToken(user),
+            Token = token,
+            TokenExpiresAt = tokenExpiresAt,
             RefreshToken = refreshToken,
             RefreshTokenExpiresAt = refreshExpiresAt
         };
@@ -57,14 +116,16 @@ public class AuthService(
 
     public async Task<ApiResponse<LoginResponse>> Login(LoginRequest request, CancellationToken cancellationToken = default)
     {
-        var user = await ValidateUserCredentialsAsync(request.Email, request.Password, cancellationToken);
+        var user = await ValidateUserCredentialsAsync(request.Phone, request.Password, cancellationToken);
         if (user == null)
             return ApiResponse<LoginResponse>.ErrorResponse("Invalid credentials.", code: ErrorCodes.InvalidCredentials);
 
         var (refreshToken, refreshExpiresAt) = await refreshTokenService.CreateAsync(user.Id, cancellationToken: cancellationToken);
+        var (token, tokenExpiresAt) = tokenGenerator.GenerateToken(user);
         var response = new LoginResponse
         {
-            Token = tokenGenerator.GenerateToken(user),
+            Token = token,
+            TokenExpiresAt = tokenExpiresAt,
             RefreshToken = refreshToken,
             RefreshTokenExpiresAt = refreshExpiresAt
         };
@@ -80,9 +141,11 @@ public class AuthService(
 
         await refreshTokenService.RevokeAsync(request.RefreshToken, cancellationToken);
         var (newRefreshToken, refreshExpiresAt) = await refreshTokenService.CreateAsync(user.Id, cancellationToken: cancellationToken);
+        var (token, tokenExpiresAt) = tokenGenerator.GenerateToken(user);
         var response = new LoginResponse
         {
-            Token = tokenGenerator.GenerateToken(user),
+            Token = token,
+            TokenExpiresAt = tokenExpiresAt,
             RefreshToken = newRefreshToken,
             RefreshTokenExpiresAt = refreshExpiresAt
         };
@@ -225,11 +288,11 @@ public class AuthService(
         return ApiResponse<object>.SuccessResponse(new { message = "Password has been reset successfully." });
     }
 
-    private async Task<User?> ValidateUserCredentialsAsync(string email, string password, CancellationToken cancellationToken)
+    private async Task<User?> ValidateUserCredentialsAsync(string phone, string password, CancellationToken cancellationToken)
     {
-        var normalizedEmail = email.Trim().ToLowerInvariant();
+        var normalizedPhone = phone.Trim();
         var user = await dbContext.Users
-            .FirstOrDefaultAsync(u => u.Email == normalizedEmail, cancellationToken);
+            .FirstOrDefaultAsync(u => u.Phone == normalizedPhone, cancellationToken);
         if (user == null)
             return null;
         return passwordService.VerifyPassword(password, user.PasswordHash) ? user : null;

@@ -14,6 +14,8 @@ public class PassportDocumentConfiguration : IEntityTypeConfiguration<PassportDo
         builder.Property(x => x.FullName).IsRequired().HasMaxLength(200);
         builder.Property(x => x.Nationality).IsRequired().HasMaxLength(100);
         builder.Property(x => x.MotherFullName).IsRequired().HasMaxLength(200);
+        builder.Property(x => x.ImageUrl).HasMaxLength(2048);
         builder.HasOne(x => x.User).WithMany(u => u.PassportDocuments).HasForeignKey(x => x.UserId).OnDelete(DeleteBehavior.Restrict);
+        builder.HasIndex(x => x.UserId).IsUnique();
     }
 }

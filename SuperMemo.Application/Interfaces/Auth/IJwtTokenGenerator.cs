@@ -4,5 +4,6 @@ namespace SuperMemo.Application.Interfaces.Auth;
 
 public interface IJwtTokenGenerator
 {
-    string GenerateToken(User user);
+    /// <summary>Returns the JWT and its expiry time (UTC).</summary>
+    (string Token, DateTime ExpiresAt) GenerateToken(User user);
 }

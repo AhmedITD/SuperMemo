@@ -6,6 +6,7 @@ namespace SuperMemo.Application.Common;
 public static class ErrorCodes
 {
     public const string EmailAlreadyExists = "EMAIL_ALREADY_EXISTS";
+    public const string PhoneAlreadyExists = "PHONE_ALREADY_EXISTS";
     public const string InvalidCredentials = "INVALID_CREDENTIALS";
     public const string UserNotApproved = "USER_NOT_APPROVED";
     public const string KycPending = "KYC_PENDING";
@@ -20,4 +21,6 @@ public static class ErrorCodes
     public const string ValidationFailed = "VALIDATION_FAILED";
     public const string ResourceNotFound = "RESOURCE_NOT_FOUND";
     public const string InvalidRefreshToken = "INVALID_REFRESH_TOKEN";
+    /// <summary>OTP verification code invalid or expired.</summary>
+    public const string InvalidVerificationCode = "INVALID_VERIFICATION_CODE";
 }

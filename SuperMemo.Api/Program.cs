@@ -18,10 +18,12 @@ using SuperMemo.Infrastructure.Data;
 using SuperMemo.Infrastructure.Data.Interceptors;
 using SuperMemo.Application.Common;
 using SuperMemo.Application.Interfaces.Payroll;
+using SuperMemo.Application.Interfaces.Storage;
 using SuperMemo.Infrastructure.Options;
 using SuperMemo.Infrastructure.Services;
 using SuperMemo.Infrastructure.Services.Auth;
 using SuperMemo.Infrastructure.Services.Sinks;
+using SuperMemo.Infrastructure.Services.Storage;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -99,6 +101,18 @@ builder.Services.Configure<PayrollOptions>(builder.Configuration.GetSection(Payr
 builder.Services.AddScoped<IPayrollRunnerService, PayrollRunnerService>();
 builder.Services.AddHostedService<PayrollRunnerHostedService>();
 
+// Storage: resolve paths to content root so uploads are under the app directory
+builder.Services.Configure<StorageOptions>(options =>
+{
+    var section = builder.Configuration.GetSection(StorageOptions.SectionName);
+    section.Bind(options);
+    if (!Path.IsPathRooted(options.BasePath))
+        options.BasePath = Path.Combine(builder.Environment.ContentRootPath, options.BasePath);
+    if (!Path.IsPathRooted(options.UserImagesPath))
+        options.UserImagesPath = Path.Combine(builder.Environment.ContentRootPath, options.UserImagesPath);
+});
+builder.Services.AddScoped<IStorageService, FileStorageService>();
+
 builder.Services.AddHttpClient<IOtpiqService, OtpiqService>();
 
 builder.Services.AddAuthorization(options =>
@@ -146,6 +160,16 @@ builder.Services.AddCors(options =>
 var app = builder.Build();
 
 app.UseCors();
+// Serve uploaded KYC images from /uploads/kyc
+var storageSection = app.Configuration.GetSection(StorageOptions.SectionName);
+var baseUrl = storageSection["BaseUrl"]?.TrimEnd('/') ?? "/uploads/kyc";
+var uploadsPath = Path.Combine(app.Environment.ContentRootPath, "uploads");
+if (Directory.Exists(uploadsPath))
+    app.UseStaticFiles(new StaticFileOptions
+    {
+        FileProvider = new Microsoft.Extensions.FileProviders.PhysicalFileProvider(uploadsPath),
+        RequestPath = "/uploads"
+    });
 app.UseSwagger();
 app.UseSwaggerUI(o => o.DisplayRequestDuration());
 

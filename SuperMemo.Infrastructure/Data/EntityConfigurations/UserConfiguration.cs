@@ -11,11 +11,11 @@ public class UserConfiguration : IEntityTypeConfiguration<User>
         builder.ToTable("Users");
         builder.HasKey(x => x.Id);
 
-        builder.Property(x => x.FirstName).IsRequired().HasMaxLength(100);
-        builder.Property(x => x.LastName).IsRequired().HasMaxLength(100);
-        builder.Property(x => x.Email).IsRequired().HasMaxLength(256);
-        builder.HasIndex(x => x.Email).IsUnique();
+        builder.Property(x => x.FullName).IsRequired().HasMaxLength(200);
+        builder.Property(x => x.Phone).IsRequired().HasMaxLength(20);
+        builder.HasIndex(x => x.Phone).IsUnique();
         builder.Property(x => x.PasswordHash).IsRequired();
         builder.Property(x => x.Role).IsRequired();
+        builder.Property(x => x.ImageUrl).HasMaxLength(2048);
     }
 }

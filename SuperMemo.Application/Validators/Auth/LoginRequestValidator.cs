@@ -7,9 +7,9 @@ public class LoginRequestValidator : AbstractValidator<LoginRequest>
 {
     public LoginRequestValidator()
     {
-        RuleFor(x => x.Email)
-            .NotEmpty().WithMessage("Email is required.")
-            .EmailAddress().WithMessage("Email must be a valid email address.");
+        RuleFor(x => x.Phone)
+            .NotEmpty().WithMessage("Phone is required.")
+            .MaximumLength(20).WithMessage("Phone must not exceed 20 characters.");
 
         RuleFor(x => x.Password)
             .NotEmpty().WithMessage("Password is required.");

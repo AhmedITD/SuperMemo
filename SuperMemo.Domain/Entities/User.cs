@@ -6,12 +6,12 @@ namespace SuperMemo.Domain.Entities;
 
 public class User : BaseEntity, IAuditable, ISoftDeletable
 {
-    public required string FirstName { get; set; }
-    public required string LastName { get; set; }
-    public required string Email { get; set; }
-    public string? Phone { get; set; }
+    public required string FullName { get; set; }
+    public required string Phone { get; set; }
     public required string PasswordHash { get; set; }
     public UserRole Role { get; set; }
+    /// <summary>Optional profile/avatar image URL (stored in external storage).</summary>
+    public string? ImageUrl { get; set; }
 
     public KycStatus KycStatus { get; set; } = KycStatus.Pending;
     public KybStatus KybStatus { get; set; } = KybStatus.Pending;

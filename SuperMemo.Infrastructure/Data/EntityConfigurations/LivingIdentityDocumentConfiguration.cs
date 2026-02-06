@@ -14,6 +14,8 @@ public class LivingIdentityDocumentConfiguration : IEntityTypeConfiguration<Livi
         builder.Property(x => x.FullFamilyName).IsRequired().HasMaxLength(200);
         builder.Property(x => x.LivingLocation).IsRequired().HasMaxLength(200);
         builder.Property(x => x.FormNumber).IsRequired().HasMaxLength(50);
+        builder.Property(x => x.ImageUrl).HasMaxLength(2048);
         builder.HasOne(x => x.User).WithMany(u => u.LivingIdentityDocuments).HasForeignKey(x => x.UserId).OnDelete(DeleteBehavior.Restrict);
+        builder.HasIndex(x => x.UserId).IsUnique();
     }
 }
