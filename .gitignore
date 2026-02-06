@@ -1,0 +1,48 @@
+# Build
+[Dd]ebug/
+[Rr]elease/
+[Bb]in/
+[Oo]bj/
+[Ll]og/
+[Ll]ogs/
+*.user
+*.suo
+*.userosscache
+*.sln.docstates
+
+# .NET
+project.lock.json
+project.fragment.lock.json
+artifacts/
+*.dll
+*.pdb
+*.exe
+*.nupkg
+*.snupkg
+*.cache
+packages/
+
+# IDE
+.idea/
+.vs/
+*.rsuser
+.vscode/
+
+# User secrets
+appsettings.*.local.json
+secrets.json
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Rider
+*.sln.iml
+.idea/
+
+# NuGet
+*.nupkg
+*.snupkg
+.nuget/
+project.assets.json
+project.nuget.cache
