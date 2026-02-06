@@ -13,6 +13,18 @@ public class Transaction : BaseEntity
     public string? Purpose { get; set; }
     /// <summary>Client-provided key to prevent duplicate transfers. Unique per from-account (or scope).</summary>
     public string? IdempotencyKey { get; set; }
+    
+    // Enhanced fields for advanced features
+    /// <summary>Reason for transaction failure (if status is Failed).</summary>
+    public FailureReason? FailureReason { get; set; }
+    /// <summary>Number of retry attempts made for this transaction.</summary>
+    public int RetryCount { get; set; } = 0;
+    /// <summary>Fraud risk score (0-100).</summary>
+    public int? RiskScore { get; set; }
+    /// <summary>Fraud risk level (LOW, MEDIUM, HIGH).</summary>
+    public RiskLevel? RiskLevel { get; set; }
+    /// <summary>Timestamp when status was last changed.</summary>
+    public DateTime? StatusChangedAt { get; set; }
 
     public Account FromAccount { get; set; } = null!;
 }

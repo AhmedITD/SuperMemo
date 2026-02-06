@@ -14,4 +14,16 @@ public class TransactionResponse
     public string? Purpose { get; set; }
     public string? IdempotencyKey { get; set; }
     public DateTime CreatedAt { get; set; }
+    
+    // Enhanced fields
+    public FailureReason? FailureReason { get; set; }
+    public int RetryCount { get; set; }
+    public int? RiskScore { get; set; }
+    public RiskLevel? RiskLevel { get; set; }
+    public DateTime? StatusChangedAt { get; set; }
+    
+    // Retry information
+    public bool? RetryRecommended { get; set; }
+    public int? RetryAfterSeconds { get; set; }
+    public int? MaxRetries { get; set; } = 3;
 }

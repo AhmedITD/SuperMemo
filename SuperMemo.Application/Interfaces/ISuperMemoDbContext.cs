@@ -16,6 +16,12 @@ public interface ISuperMemoDbContext
     DbSet<LivingIdentityDocument> LivingIdentityDocuments { get; set; }
     DbSet<PayrollJob> PayrollJobs { get; set; }
     DbSet<PhoneVerificationCode> PhoneVerificationCodes { get; set; }
+    
+    // Advanced features entities
+    DbSet<MerchantAccount> MerchantAccounts { get; set; }
+    DbSet<FraudDetectionRule> FraudDetectionRules { get; set; }
+    DbSet<TransactionStatusHistory> TransactionStatusHistory { get; set; }
+    
     Task<int> SaveChangesAsync(CancellationToken cancellationToken = default);
     int SaveChanges();
 }

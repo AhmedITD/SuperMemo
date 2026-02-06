@@ -23,6 +23,11 @@ public class SuperMemoDbContext : DbContext, ISuperMemoDbContext
     public DbSet<LivingIdentityDocument> LivingIdentityDocuments { get; set; }
     public DbSet<PayrollJob> PayrollJobs { get; set; }
     public DbSet<PhoneVerificationCode> PhoneVerificationCodes { get; set; }
+    
+    // Advanced features entities
+    public DbSet<MerchantAccount> MerchantAccounts { get; set; }
+    public DbSet<FraudDetectionRule> FraudDetectionRules { get; set; }
+    public DbSet<TransactionStatusHistory> TransactionStatusHistory { get; set; }
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {

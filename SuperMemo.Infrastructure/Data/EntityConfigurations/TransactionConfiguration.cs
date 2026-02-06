@@ -13,7 +13,14 @@ public class TransactionConfiguration : IEntityTypeConfiguration<Transaction>
         builder.Property(x => x.Amount).HasPrecision(18, 4);
         builder.Property(x => x.ToAccountNumber).IsRequired().HasMaxLength(34);
         builder.Property(x => x.IdempotencyKey).HasMaxLength(64);
+        builder.Property(x => x.FailureReason);
+        builder.Property(x => x.RetryCount).HasDefaultValue(0);
+        builder.Property(x => x.RiskScore);
         builder.HasOne(x => x.FromAccount).WithMany(a => a.OutgoingTransactions).HasForeignKey(x => x.FromAccountId).OnDelete(DeleteBehavior.Restrict);
         builder.HasIndex(x => new { x.FromAccountId, x.IdempotencyKey }).IsUnique().HasFilter("\"IdempotencyKey\" IS NOT NULL AND \"IdempotencyKey\" != ''");
+        
+        // Performance indexes for new fields
+        builder.HasIndex(x => new { x.Status, x.StatusChangedAt });
+        builder.HasIndex(x => new { x.RiskLevel, x.Status });
     }
 }

@@ -35,4 +35,15 @@ public class TransactionsController(ITransactionService transactionService, Appl
         var result = await transactionService.GetByIdAsync(id, currentUser.Id, cancellationToken);
         return result.Success ? Ok(result) : NotFound(result);
     }
+
+    /// <summary>
+    /// Retries a failed transaction if it's eligible for retry.
+    /// </summary>
+    [HttpPost("{transactionId}/retry")]
+    public async Task<ActionResult<ApiResponse<Application.DTOs.responses.Transactions.TransactionResponse>>> RetryTransaction(
+        int transactionId, CancellationToken cancellationToken)
+    {
+        var result = await transactionService.RetryTransactionAsync(transactionId, currentUser.Id, cancellationToken);
+        return result.Success ? Ok(result) : BadRequest(result);
+    }
 }

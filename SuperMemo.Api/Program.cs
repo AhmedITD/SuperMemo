@@ -99,6 +99,11 @@ builder.Services.Configure<PayrollOptions>(builder.Configuration.GetSection(Payr
 builder.Services.AddScoped<IPayrollRunnerService, PayrollRunnerService>();
 builder.Services.AddHostedService<PayrollRunnerHostedService>();
 
+// Transaction processing background services
+builder.Services.AddHostedService<SuperMemo.Infrastructure.Services.TransactionProcessingHostedService>();
+builder.Services.AddHostedService<SuperMemo.Infrastructure.Services.TransactionExpirationHostedService>();
+builder.Services.AddHostedService<SuperMemo.Infrastructure.Services.TransactionAutoRetryHostedService>();
+
 builder.Services.AddHttpClient<IOtpiqService, OtpiqService>();
 
 builder.Services.AddAuthorization(options =>

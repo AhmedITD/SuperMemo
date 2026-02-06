@@ -20,4 +20,10 @@ public static class ErrorCodes
     public const string ValidationFailed = "VALIDATION_FAILED";
     public const string ResourceNotFound = "RESOURCE_NOT_FOUND";
     public const string InvalidRefreshToken = "INVALID_REFRESH_TOKEN";
+    
+    // Advanced features error codes
+    public const string TemporaryFailure = "TEMPORARY_FAILURE";
+    public const string PermanentFailure = "PERMANENT_FAILURE";
+    public const string InvalidStatusTransition = "INVALID_STATUS_TRANSITION";
+    public const string HighRiskTransaction = "HIGH_RISK_TRANSACTION";
 }

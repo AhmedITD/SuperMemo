@@ -3,7 +3,9 @@ namespace SuperMemo.Domain.Enums;
 public enum TransactionStatus
 {
     Created = 0,
-    Sending = 1,
-    Completed = 2,
-    Failed = 3
+    Pending = 1,
+    Sending = 2,
+    Completed = 3,
+    Failed = 4,
+    Expired = 5
 }
