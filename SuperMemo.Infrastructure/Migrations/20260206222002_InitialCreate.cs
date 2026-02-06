@@ -7,7 +7,7 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace SuperMemo.Infrastructure.Migrations
 {
     /// <inheritdoc />
-    public partial class Initial : Migration
+    public partial class InitialCreate : Migration
     {
         /// <inheritdoc />
         protected override void Up(MigrationBuilder migrationBuilder)
@@ -27,6 +27,26 @@ namespace SuperMemo.Infrastructure.Migrations
                 constraints: table =>
                 {
                     table.PrimaryKey("PK_AuditLogs", x => x.Id);
+                });
+
+            migrationBuilder.CreateTable(
+                name: "FraudDetectionRules",
+                columns: table => new
+                {
+                    Id = table.Column<int>(type: "integer", nullable: false)
+                        .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn),
+                    RuleName = table.Column<string>(type: "character varying(100)", maxLength: 100, nullable: false),
+                    RuleType = table.Column<string>(type: "character varying(50)", maxLength: 50, nullable: false),
+                    ThresholdValue = table.Column<decimal>(type: "numeric(18,4)", precision: 18, scale: 4, nullable: true),
+                    ThresholdCount = table.Column<int>(type: "integer", nullable: true),
+                    TimeWindow = table.Column<TimeSpan>(type: "interval", nullable: true),
+                    IsActive = table.Column<bool>(type: "boolean", nullable: false),
+                    CreatedAt = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
+                    UpdatedAt = table.Column<DateTime>(type: "timestamp with time zone", nullable: true)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_FraudDetectionRules", x => x.Id);
                 });
 
             migrationBuilder.CreateTable(
@@ -59,6 +79,7 @@ namespace SuperMemo.Infrastructure.Migrations
                     Phone = table.Column<string>(type: "character varying(20)", maxLength: 20, nullable: false),
                     PasswordHash = table.Column<string>(type: "text", nullable: false),
                     Role = table.Column<int>(type: "integer", nullable: false),
+                    ImageUrl = table.Column<string>(type: "character varying(2048)", maxLength: 2048, nullable: true),
                     KycStatus = table.Column<int>(type: "integer", nullable: false),
                     KybStatus = table.Column<int>(type: "integer", nullable: false),
                     ApprovalStatus = table.Column<int>(type: "integer", nullable: false),
@@ -84,6 +105,11 @@ namespace SuperMemo.Infrastructure.Migrations
                     Currency = table.Column<string>(type: "character varying(3)", maxLength: 3, nullable: false),
                     Status = table.Column<int>(type: "integer", nullable: false),
                     AccountNumber = table.Column<string>(type: "character varying(34)", maxLength: 34, nullable: false),
+                    AccountType = table.Column<int>(type: "integer", nullable: false, defaultValue: 0),
+                    DailySpendingLimit = table.Column<decimal>(type: "numeric(18,4)", precision: 18, scale: 4, nullable: true),
+                    DailySpentAmount = table.Column<decimal>(type: "numeric(18,4)", precision: 18, scale: 4, nullable: false, defaultValue: 0m),
+                    LastInterestCalculationDate = table.Column<DateTime>(type: "timestamp with time zone", nullable: true),
+                    LastDailyLimitResetDate = table.Column<DateTime>(type: "timestamp with time zone", nullable: true),
                     CreatedAt = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
                     UpdatedAt = table.Column<DateTime>(type: "timestamp with time zone", nullable: true)
                 },
@@ -264,6 +290,98 @@ namespace SuperMemo.Infrastructure.Migrations
                 });
 
             migrationBuilder.CreateTable(
+                name: "MerchantAccounts",
+                columns: table => new
+                {
+                    Id = table.Column<int>(type: "integer", nullable: false)
+                        .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn),
+                    AccountId = table.Column<int>(type: "integer", nullable: false),
+                    MerchantId = table.Column<string>(type: "character varying(50)", maxLength: 50, nullable: false),
+                    MerchantName = table.Column<string>(type: "character varying(200)", maxLength: 200, nullable: false),
+                    QrCodeData = table.Column<string>(type: "character varying(500)", maxLength: 500, nullable: true),
+                    NfcUrl = table.Column<string>(type: "character varying(500)", maxLength: 500, nullable: true),
+                    IsActive = table.Column<bool>(type: "boolean", nullable: false),
+                    CreatedAt = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
+                    UpdatedAt = table.Column<DateTime>(type: "timestamp with time zone", nullable: true)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_MerchantAccounts", x => x.Id);
+                    table.ForeignKey(
+                        name: "FK_MerchantAccounts_Accounts_AccountId",
+                        column: x => x.AccountId,
+                        principalTable: "Accounts",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Restrict);
+                });
+
+            migrationBuilder.CreateTable(
+                name: "Payments",
+                columns: table => new
+                {
+                    Id = table.Column<int>(type: "integer", nullable: false)
+                        .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn),
+                    UserId = table.Column<int>(type: "integer", nullable: false),
+                    AccountId = table.Column<int>(type: "integer", nullable: false),
+                    PaymentGateway = table.Column<string>(type: "character varying(50)", maxLength: 50, nullable: false),
+                    GatewayPaymentId = table.Column<string>(type: "character varying(100)", maxLength: 100, nullable: true),
+                    RequestId = table.Column<string>(type: "character varying(100)", maxLength: 100, nullable: false),
+                    Amount = table.Column<decimal>(type: "numeric(18,4)", precision: 18, scale: 4, nullable: false),
+                    Currency = table.Column<string>(type: "character varying(3)", maxLength: 3, nullable: false),
+                    Status = table.Column<int>(type: "integer", nullable: false),
+                    PaymentUrl = table.Column<string>(type: "character varying(500)", maxLength: 500, nullable: true),
+                    TransactionId = table.Column<int>(type: "integer", nullable: true),
+                    GatewayResponse = table.Column<string>(type: "text", nullable: true),
+                    WebhookReceived = table.Column<bool>(type: "boolean", nullable: false),
+                    WebhookData = table.Column<string>(type: "text", nullable: true),
+                    CreatedAt = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
+                    UpdatedAt = table.Column<DateTime>(type: "timestamp with time zone", nullable: true)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_Payments", x => x.Id);
+                    table.ForeignKey(
+                        name: "FK_Payments_Accounts_AccountId",
+                        column: x => x.AccountId,
+                        principalTable: "Accounts",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Restrict);
+                    table.ForeignKey(
+                        name: "FK_Payments_Users_UserId",
+                        column: x => x.UserId,
+                        principalTable: "Users",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Restrict);
+                });
+
+            migrationBuilder.CreateTable(
+                name: "PaymentWebhookLogs",
+                columns: table => new
+                {
+                    Id = table.Column<int>(type: "integer", nullable: false)
+                        .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn),
+                    PaymentId = table.Column<int>(type: "integer", nullable: false),
+                    WebhookPayload = table.Column<string>(type: "text", nullable: false),
+                    Signature = table.Column<string>(type: "character varying(500)", maxLength: 500, nullable: true),
+                    SignatureValid = table.Column<bool>(type: "boolean", nullable: false),
+                    Processed = table.Column<bool>(type: "boolean", nullable: false),
+                    ProcessedAt = table.Column<DateTime>(type: "timestamp with time zone", nullable: true),
+                    ErrorMessage = table.Column<string>(type: "character varying(1000)", maxLength: 1000, nullable: true),
+                    CreatedAt = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
+                    UpdatedAt = table.Column<DateTime>(type: "timestamp with time zone", nullable: true)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_PaymentWebhookLogs", x => x.Id);
+                    table.ForeignKey(
+                        name: "FK_PaymentWebhookLogs_Payments_PaymentId",
+                        column: x => x.PaymentId,
+                        principalTable: "Payments",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Cascade);
+                });
+
+            migrationBuilder.CreateTable(
                 name: "Transactions",
                 columns: table => new
                 {
@@ -276,6 +394,13 @@ namespace SuperMemo.Infrastructure.Migrations
                     Status = table.Column<int>(type: "integer", nullable: false),
                     Purpose = table.Column<string>(type: "text", nullable: true),
                     IdempotencyKey = table.Column<string>(type: "character varying(64)", maxLength: 64, nullable: true),
+                    Category = table.Column<int>(type: "integer", nullable: false, defaultValue: 0),
+                    PaymentId = table.Column<int>(type: "integer", nullable: true),
+                    FailureReason = table.Column<int>(type: "integer", nullable: true),
+                    RetryCount = table.Column<int>(type: "integer", nullable: false, defaultValue: 0),
+                    RiskScore = table.Column<int>(type: "integer", nullable: true),
+                    RiskLevel = table.Column<int>(type: "integer", nullable: true),
+                    StatusChangedAt = table.Column<DateTime>(type: "timestamp with time zone", nullable: true),
                     CreatedAt = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
                     UpdatedAt = table.Column<DateTime>(type: "timestamp with time zone", nullable: true)
                 },
@@ -288,6 +413,38 @@ namespace SuperMemo.Infrastructure.Migrations
                         principalTable: "Accounts",
                         principalColumn: "Id",
                         onDelete: ReferentialAction.Restrict);
+                    table.ForeignKey(
+                        name: "FK_Transactions_Payments_PaymentId",
+                        column: x => x.PaymentId,
+                        principalTable: "Payments",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.SetNull);
+                });
+
+            migrationBuilder.CreateTable(
+                name: "TransactionStatusHistory",
+                columns: table => new
+                {
+                    Id = table.Column<int>(type: "integer", nullable: false)
+                        .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn),
+                    TransactionId = table.Column<int>(type: "integer", nullable: false),
+                    OldStatus = table.Column<int>(type: "integer", nullable: false),
+                    NewStatus = table.Column<int>(type: "integer", nullable: false),
+                    ChangedAt = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
+                    ChangedBy = table.Column<int>(type: "integer", nullable: true),
+                    Reason = table.Column<string>(type: "character varying(500)", maxLength: 500, nullable: true),
+                    CreatedAt = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
+                    UpdatedAt = table.Column<DateTime>(type: "timestamp with time zone", nullable: true)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_TransactionStatusHistory", x => x.Id);
+                    table.ForeignKey(
+                        name: "FK_TransactionStatusHistory_Transactions_TransactionId",
+                        column: x => x.TransactionId,
+                        principalTable: "Transactions",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Restrict);
                 });
 
             migrationBuilder.CreateIndex(
@@ -295,6 +452,21 @@ namespace SuperMemo.Infrastructure.Migrations
                 table: "Accounts",
                 column: "AccountNumber",
                 unique: true);
+
+            migrationBuilder.CreateIndex(
+                name: "IX_Accounts_AccountType",
+                table: "Accounts",
+                column: "AccountType");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_Accounts_LastDailyLimitResetDate",
+                table: "Accounts",
+                column: "LastDailyLimitResetDate");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_Accounts_LastInterestCalculationDate",
+                table: "Accounts",
+                column: "LastInterestCalculationDate");
 
             migrationBuilder.CreateIndex(
                 name: "IX_Accounts_UserId",
@@ -314,6 +486,16 @@ namespace SuperMemo.Infrastructure.Migrations
                 unique: true);
 
             migrationBuilder.CreateIndex(
+                name: "IX_FraudDetectionRules_IsActive",
+                table: "FraudDetectionRules",
+                column: "IsActive");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_FraudDetectionRules_RuleType",
+                table: "FraudDetectionRules",
+                column: "RuleType");
+
+            migrationBuilder.CreateIndex(
                 name: "IX_IcDocuments_UserId",
                 table: "IcDocuments",
                 column: "UserId",
@@ -326,10 +508,67 @@ namespace SuperMemo.Infrastructure.Migrations
                 unique: true);
 
             migrationBuilder.CreateIndex(
+                name: "IX_MerchantAccounts_AccountId",
+                table: "MerchantAccounts",
+                column: "AccountId");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_MerchantAccounts_MerchantId",
+                table: "MerchantAccounts",
+                column: "MerchantId",
+                unique: true);
+
+            migrationBuilder.CreateIndex(
                 name: "IX_PassportDocuments_UserId",
                 table: "PassportDocuments",
                 column: "UserId",
                 unique: true);
+
+            migrationBuilder.CreateIndex(
+                name: "IX_Payments_AccountId_Status",
+                table: "Payments",
+                columns: new[] { "AccountId", "Status" });
+
+            migrationBuilder.CreateIndex(
+                name: "IX_Payments_CreatedAt",
+                table: "Payments",
+                column: "CreatedAt");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_Payments_GatewayPaymentId",
+                table: "Payments",
+                column: "GatewayPaymentId");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_Payments_RequestId",
+                table: "Payments",
+                column: "RequestId",
+                unique: true);
+
+            migrationBuilder.CreateIndex(
+                name: "IX_Payments_Status",
+                table: "Payments",
+                column: "Status");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_Payments_UserId_Status",
+                table: "Payments",
+                columns: new[] { "UserId", "Status" });
+
+            migrationBuilder.CreateIndex(
+                name: "IX_PaymentWebhookLogs_CreatedAt",
+                table: "PaymentWebhookLogs",
+                column: "CreatedAt");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_PaymentWebhookLogs_PaymentId",
+                table: "PaymentWebhookLogs",
+                column: "PaymentId");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_PaymentWebhookLogs_PaymentId_Processed",
+                table: "PaymentWebhookLogs",
+                columns: new[] { "PaymentId", "Processed" });
 
             migrationBuilder.CreateIndex(
                 name: "IX_PayrollJobs_EmployeeUserId",
@@ -358,11 +597,52 @@ namespace SuperMemo.Infrastructure.Migrations
                 column: "UserId");
 
             migrationBuilder.CreateIndex(
+                name: "IX_Transactions_Category",
+                table: "Transactions",
+                column: "Category");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_Transactions_FromAccountId_CreatedAt",
+                table: "Transactions",
+                columns: new[] { "FromAccountId", "CreatedAt" });
+
+            migrationBuilder.CreateIndex(
                 name: "IX_Transactions_FromAccountId_IdempotencyKey",
                 table: "Transactions",
                 columns: new[] { "FromAccountId", "IdempotencyKey" },
                 unique: true,
                 filter: "\"IdempotencyKey\" IS NOT NULL AND \"IdempotencyKey\" != ''");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_Transactions_PaymentId",
+                table: "Transactions",
+                column: "PaymentId",
+                unique: true);
+
+            migrationBuilder.CreateIndex(
+                name: "IX_Transactions_RiskLevel_Status",
+                table: "Transactions",
+                columns: new[] { "RiskLevel", "Status" });
+
+            migrationBuilder.CreateIndex(
+                name: "IX_Transactions_Status_CreatedAt",
+                table: "Transactions",
+                columns: new[] { "Status", "CreatedAt" });
+
+            migrationBuilder.CreateIndex(
+                name: "IX_Transactions_Status_StatusChangedAt",
+                table: "Transactions",
+                columns: new[] { "Status", "StatusChangedAt" });
+
+            migrationBuilder.CreateIndex(
+                name: "IX_TransactionStatusHistory_ChangedAt",
+                table: "TransactionStatusHistory",
+                column: "ChangedAt");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_TransactionStatusHistory_TransactionId",
+                table: "TransactionStatusHistory",
+                column: "TransactionId");
 
             migrationBuilder.CreateIndex(
                 name: "IX_Users_Phone",
@@ -382,13 +662,22 @@ namespace SuperMemo.Infrastructure.Migrations
                 name: "Cards");
 
             migrationBuilder.DropTable(
+                name: "FraudDetectionRules");
+
+            migrationBuilder.DropTable(
                 name: "IcDocuments");
 
             migrationBuilder.DropTable(
                 name: "LivingIdentityDocuments");
 
             migrationBuilder.DropTable(
+                name: "MerchantAccounts");
+
+            migrationBuilder.DropTable(
                 name: "PassportDocuments");
+
+            migrationBuilder.DropTable(
+                name: "PaymentWebhookLogs");
 
             migrationBuilder.DropTable(
                 name: "PayrollJobs");
@@ -400,7 +689,13 @@ namespace SuperMemo.Infrastructure.Migrations
                 name: "RefreshTokens");
 
             migrationBuilder.DropTable(
+                name: "TransactionStatusHistory");
+
+            migrationBuilder.DropTable(
                 name: "Transactions");
+
+            migrationBuilder.DropTable(
+                name: "Payments");
 
             migrationBuilder.DropTable(
                 name: "Accounts");

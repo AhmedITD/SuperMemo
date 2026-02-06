@@ -443,6 +443,135 @@ namespace SuperMemo.Infrastructure.Migrations
                     b.ToTable("PassportDocuments", (string)null);
                 });
 
+            modelBuilder.Entity("SuperMemo.Domain.Entities.Payment", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+
+                    b.Property<int>("AccountId")
+                        .HasColumnType("integer");
+
+                    b.Property<decimal>("Amount")
+                        .HasPrecision(18, 4)
+                        .HasColumnType("numeric(18,4)");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("Currency")
+                        .IsRequired()
+                        .HasMaxLength(3)
+                        .HasColumnType("character varying(3)");
+
+                    b.Property<string>("GatewayPaymentId")
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)");
+
+                    b.Property<string>("GatewayResponse")
+                        .HasColumnType("text");
+
+                    b.Property<string>("PaymentGateway")
+                        .IsRequired()
+                        .HasMaxLength(50)
+                        .HasColumnType("character varying(50)");
+
+                    b.Property<string>("PaymentUrl")
+                        .HasMaxLength(500)
+                        .HasColumnType("character varying(500)");
+
+                    b.Property<string>("RequestId")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)");
+
+                    b.Property<int>("Status")
+                        .HasColumnType("integer");
+
+                    b.Property<int?>("TransactionId")
+                        .HasColumnType("integer");
+
+                    b.Property<DateTime?>("UpdatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<int>("UserId")
+                        .HasColumnType("integer");
+
+                    b.Property<string>("WebhookData")
+                        .HasColumnType("text");
+
+                    b.Property<bool>("WebhookReceived")
+                        .HasColumnType("boolean");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("CreatedAt");
+
+                    b.HasIndex("GatewayPaymentId");
+
+                    b.HasIndex("RequestId")
+                        .IsUnique();
+
+                    b.HasIndex("Status");
+
+                    b.HasIndex("AccountId", "Status");
+
+                    b.HasIndex("UserId", "Status");
+
+                    b.ToTable("Payments", (string)null);
+                });
+
+            modelBuilder.Entity("SuperMemo.Domain.Entities.PaymentWebhookLog", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("ErrorMessage")
+                        .HasMaxLength(1000)
+                        .HasColumnType("character varying(1000)");
+
+                    b.Property<int>("PaymentId")
+                        .HasColumnType("integer");
+
+                    b.Property<bool>("Processed")
+                        .HasColumnType("boolean");
+
+                    b.Property<DateTime?>("ProcessedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("Signature")
+                        .HasMaxLength(500)
+                        .HasColumnType("character varying(500)");
+
+                    b.Property<bool>("SignatureValid")
+                        .HasColumnType("boolean");
+
+                    b.Property<DateTime?>("UpdatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("WebhookPayload")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("CreatedAt");
+
+                    b.HasIndex("PaymentId");
+
+                    b.HasIndex("PaymentId", "Processed");
+
+                    b.ToTable("PaymentWebhookLogs", (string)null);
+                });
+
             modelBuilder.Entity("SuperMemo.Domain.Entities.PayrollJob", b =>
                 {
                     b.Property<int>("Id")
@@ -593,6 +722,11 @@ namespace SuperMemo.Infrastructure.Migrations
                         .HasPrecision(18, 4)
                         .HasColumnType("numeric(18,4)");
 
+                    b.Property<int>("Category")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer")
+                        .HasDefaultValue(0);
+
                     b.Property<DateTime>("CreatedAt")
                         .HasColumnType("timestamp with time zone");
 
@@ -605,6 +739,9 @@ namespace SuperMemo.Infrastructure.Migrations
                     b.Property<string>("IdempotencyKey")
                         .HasMaxLength(64)
                         .HasColumnType("character varying(64)");
+
+                    b.Property<int?>("PaymentId")
+                        .HasColumnType("integer");
 
                     b.Property<string>("Purpose")
                         .HasColumnType("text");
@@ -639,11 +776,20 @@ namespace SuperMemo.Infrastructure.Migrations
 
                     b.HasKey("Id");
 
+                    b.HasIndex("Category");
+
+                    b.HasIndex("PaymentId")
+                        .IsUnique();
+
+                    b.HasIndex("FromAccountId", "CreatedAt");
+
                     b.HasIndex("FromAccountId", "IdempotencyKey")
                         .IsUnique()
                         .HasFilter("\"IdempotencyKey\" IS NOT NULL AND \"IdempotencyKey\" != ''");
 
                     b.HasIndex("RiskLevel", "Status");
+
+                    b.HasIndex("Status", "CreatedAt");
 
                     b.HasIndex("Status", "StatusChangedAt");
 
@@ -822,6 +968,36 @@ namespace SuperMemo.Infrastructure.Migrations
                     b.Navigation("User");
                 });
 
+            modelBuilder.Entity("SuperMemo.Domain.Entities.Payment", b =>
+                {
+                    b.HasOne("SuperMemo.Domain.Entities.Account", "Account")
+                        .WithMany("Payments")
+                        .HasForeignKey("AccountId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("SuperMemo.Domain.Entities.User", "User")
+                        .WithMany("Payments")
+                        .HasForeignKey("UserId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.Navigation("Account");
+
+                    b.Navigation("User");
+                });
+
+            modelBuilder.Entity("SuperMemo.Domain.Entities.PaymentWebhookLog", b =>
+                {
+                    b.HasOne("SuperMemo.Domain.Entities.Payment", "Payment")
+                        .WithMany("WebhookLogs")
+                        .HasForeignKey("PaymentId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Payment");
+                });
+
             modelBuilder.Entity("SuperMemo.Domain.Entities.PayrollJob", b =>
                 {
                     b.HasOne("SuperMemo.Domain.Entities.User", "EmployeeUser")
@@ -852,7 +1028,14 @@ namespace SuperMemo.Infrastructure.Migrations
                         .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
 
+                    b.HasOne("SuperMemo.Domain.Entities.Payment", "Payment")
+                        .WithOne("Transaction")
+                        .HasForeignKey("SuperMemo.Domain.Entities.Transaction", "PaymentId")
+                        .OnDelete(DeleteBehavior.SetNull);
+
                     b.Navigation("FromAccount");
+
+                    b.Navigation("Payment");
                 });
 
             modelBuilder.Entity("SuperMemo.Domain.Entities.TransactionStatusHistory", b =>
@@ -871,6 +1054,15 @@ namespace SuperMemo.Infrastructure.Migrations
                     b.Navigation("Cards");
 
                     b.Navigation("OutgoingTransactions");
+
+                    b.Navigation("Payments");
+                });
+
+            modelBuilder.Entity("SuperMemo.Domain.Entities.Payment", b =>
+                {
+                    b.Navigation("Transaction");
+
+                    b.Navigation("WebhookLogs");
                 });
 
             modelBuilder.Entity("SuperMemo.Domain.Entities.User", b =>
@@ -882,6 +1074,8 @@ namespace SuperMemo.Infrastructure.Migrations
                     b.Navigation("LivingIdentityDocuments");
 
                     b.Navigation("PassportDocuments");
+
+                    b.Navigation("Payments");
 
                     b.Navigation("PayrollJobsAsEmployee");
                 });
