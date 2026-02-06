@@ -18,7 +18,8 @@ public class TransactionService(
     IAuditEventLogger auditLogger,
     ITransactionStatusMachine statusMachine,
     IFraudDetectionService fraudDetectionService,
-    IFailureClassificationService failureClassificationService) : ITransactionService
+    IFailureClassificationService failureClassificationService,
+    Application.Interfaces.Accounts.IDailyLimitService dailyLimitService) : ITransactionService
 {
     private const int MaxRetries = 3;
 
@@ -67,6 +68,19 @@ public class TransactionService(
 
         if (fromAccount.Balance < request.Amount)
             return ApiResponse<TransactionResponse>.ErrorResponse("Insufficient balance.", code: ErrorCodes.InsufficientFunds);
+
+        // Check daily spending limit for Savings accounts
+        if (fromAccount.AccountType == Domain.Enums.AccountType.Savings)
+        {
+            var canSpend = await dailyLimitService.CheckDailyLimitAsync(fromAccount.Id, request.Amount, cancellationToken);
+            if (!canSpend)
+            {
+                var remaining = await dailyLimitService.GetRemainingLimitAsync(fromAccount.Id, cancellationToken);
+                return ApiResponse<TransactionResponse>.ErrorResponse(
+                    $"Daily spending limit exceeded. Remaining limit: {remaining:C}",
+                    code: ErrorCodes.DailyLimitExceeded);
+            }
+        }
 
         // Create transaction with Created status
         var transaction = new Transaction

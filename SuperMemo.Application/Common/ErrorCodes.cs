@@ -29,4 +29,9 @@ public static class ErrorCodes
     public const string PermanentFailure = "PERMANENT_FAILURE";
     public const string InvalidStatusTransition = "INVALID_STATUS_TRANSITION";
     public const string HighRiskTransaction = "HIGH_RISK_TRANSACTION";
+    
+    // Phase 8 error codes
+    public const string DailyLimitExceeded = "DAILY_LIMIT_EXCEEDED";
+    public const string InvalidAccountType = "INVALID_ACCOUNT_TYPE";
+    public const string AccountTypeImmutable = "ACCOUNT_TYPE_IMMUTABLE";
 }

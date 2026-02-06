@@ -17,5 +17,6 @@ public enum FailureReason
     RiskBlocked = 12,
     AccountFrozen = 13,
     AccountClosed = 14,
-    TransactionExpired = 15
+    TransactionExpired = 15,
+    DailyLimitExceeded = 16
 }

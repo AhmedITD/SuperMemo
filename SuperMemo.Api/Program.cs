@@ -106,6 +106,10 @@ builder.Services.AddHostedService<SuperMemo.Infrastructure.Services.TransactionP
 builder.Services.AddHostedService<SuperMemo.Infrastructure.Services.TransactionExpirationHostedService>();
 builder.Services.AddHostedService<SuperMemo.Infrastructure.Services.TransactionAutoRetryHostedService>();
 
+// Phase 8 background services
+builder.Services.AddHostedService<SuperMemo.Infrastructure.Services.InterestCalculationHostedService>();
+builder.Services.AddHostedService<SuperMemo.Infrastructure.Services.DailyLimitResetHostedService>();
+
 // Storage: resolve paths to content root so uploads are under the app directory
 builder.Services.Configure<StorageOptions>(options =>
 {

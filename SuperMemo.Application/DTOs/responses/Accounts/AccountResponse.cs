@@ -10,5 +10,6 @@ public class AccountResponse
     public decimal Balance { get; set; }
     public string Currency { get; set; } = null!;
     public AccountStatus Status { get; set; }
+    public AccountType AccountType { get; set; }
     public DateTime CreatedAt { get; set; }
 }

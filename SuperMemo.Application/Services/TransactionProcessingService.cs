@@ -10,7 +10,8 @@ namespace SuperMemo.Application.Services;
 public class TransactionProcessingService(
     ISuperMemoDbContext db,
     ITransactionStatusMachine statusMachine,
-    IFailureClassificationService failureClassificationService) : ITransactionProcessingService
+    IFailureClassificationService failureClassificationService,
+    Application.Interfaces.Accounts.IDailyLimitService dailyLimitService) : ITransactionProcessingService
 {
     public async Task<int> ProcessPendingTransactionsAsync(CancellationToken cancellationToken = default)
     {
@@ -48,9 +49,32 @@ public class TransactionProcessingService(
                 // Move to Sending
                 statusMachine.TransitionTo(transaction, TransactionStatus.Sending);
 
+                // Check daily limit for Savings accounts (debit transactions only)
+                if (transaction.TransactionType == TransactionType.Debit 
+                    && transaction.FromAccount.AccountType == Domain.Enums.AccountType.Savings)
+                {
+                    var canSpend = await dailyLimitService.CheckDailyLimitAsync(
+                        transaction.FromAccount.Id, transaction.Amount, cancellationToken);
+                    if (!canSpend)
+                    {
+                        statusMachine.TransitionTo(transaction, TransactionStatus.Failed, null, "Daily spending limit exceeded");
+                        transaction.FailureReason = FailureReason.DailyLimitExceeded;
+                        await db.SaveChangesAsync(cancellationToken);
+                        continue;
+                    }
+                }
+
                 // Execute transfer
                 transaction.FromAccount.Balance -= transaction.Amount;
                 toAccount.Balance += transaction.Amount;
+
+                // Update daily spent amount for Savings accounts (debit transactions only)
+                if (transaction.TransactionType == TransactionType.Debit 
+                    && transaction.FromAccount.AccountType == Domain.Enums.AccountType.Savings)
+                {
+                    await dailyLimitService.UpdateDailySpentAsync(
+                        transaction.FromAccount.Id, transaction.Amount, cancellationToken);
+                }
 
                 // Move to Completed
                 statusMachine.TransitionTo(transaction, TransactionStatus.Completed);

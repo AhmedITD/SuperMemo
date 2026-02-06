@@ -10,7 +10,9 @@ namespace SuperMemo.Api.Controllers;
 
 [Authorize(Policy = "Admin")]
 [Route("api/admin")]
-public class AdminController(IAdminApprovalService adminApprovalService) : BaseController
+public class AdminController(
+    IAdminApprovalService adminApprovalService,
+    Application.Interfaces.Admin.IAdminDashboardService adminDashboardService) : BaseController
 {
     [HttpGet("users")]
     public async Task<ActionResult<ApiResponse<PaginatedListResponse<Application.DTOs.responses.Admin.UserApprovalListItemResponse>>>> ListUsers(
@@ -60,6 +62,32 @@ public class AdminController(IAdminApprovalService adminApprovalService) : BaseC
     public async Task<ActionResult<ApiResponse<object>>> VerifyLivingIdentityDocument(int documentId, [FromBody] VerifyKycDocumentRequest request, CancellationToken cancellationToken)
     {
         var result = await adminApprovalService.VerifyLivingIdentityDocumentAsync(documentId, request, cancellationToken);
+        return result.Success ? Ok(result) : BadRequest(result);
+    }
+
+    [HttpGet("dashboard/metrics")]
+    public async Task<ActionResult> GetDashboardMetrics(CancellationToken cancellationToken)
+    {
+        var result = await adminDashboardService.GetMetricsAsync(cancellationToken);
+        return result.Success ? Ok(result) : BadRequest(result);
+    }
+
+    [HttpGet("dashboard/users")]
+    public async Task<ActionResult> GetUsers(
+        [FromQuery] string? search,
+        [FromQuery] string? status,
+        [FromQuery] int page = 1,
+        [FromQuery] int pageSize = 10,
+        CancellationToken cancellationToken = default)
+    {
+        var result = await adminDashboardService.GetUsersAsync(search, status, page, pageSize, cancellationToken);
+        return result.Success ? Ok(result) : BadRequest(result);
+    }
+
+    [HttpGet("dashboard/users/{userId}/status")]
+    public async Task<ActionResult> GetUserStatus(int userId, CancellationToken cancellationToken)
+    {
+        var result = await adminDashboardService.GetUserStatusAsync(userId, cancellationToken);
         return result.Success ? Ok(result) : BadRequest(result);
     }
 }

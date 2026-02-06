@@ -39,6 +39,7 @@ public class AccountService(ISuperMemoDbContext db) : IAccountService
             Balance = a.Balance,
             Currency = a.Currency,
             Status = a.Status,
+            AccountType = a.AccountType,
             CreatedAt = a.CreatedAt
         };
     }
