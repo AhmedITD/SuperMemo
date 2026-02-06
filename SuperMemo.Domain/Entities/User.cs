@@ -26,4 +26,5 @@ public class User : BaseEntity, IAuditable, ISoftDeletable
     public ICollection<PassportDocument> PassportDocuments { get; set; } = new List<PassportDocument>();
     public ICollection<LivingIdentityDocument> LivingIdentityDocuments { get; set; } = new List<LivingIdentityDocument>();
     public ICollection<PayrollJob> PayrollJobsAsEmployee { get; set; } = new List<PayrollJob>();
+    public ICollection<Payment> Payments { get; set; } = new List<Payment>();
 }

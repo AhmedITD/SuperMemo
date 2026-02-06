@@ -2,49 +2,72 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using SuperMemo.Api.Common;
 using SuperMemo.Application.DTOs.requests.Payments;
-using SuperMemo.Application.DTOs.responses.Common;
-using SuperMemo.Application.Interfaces.Payments;
 using SuperMemo.Application.Interfaces.Auth;
+using SuperMemo.Application.Interfaces.Payments;
 
 namespace SuperMemo.Api.Controllers;
 
 [Authorize]
 [Route("api/payments")]
-public class PaymentController(IPaymentInitiationService paymentService, ICurrentUser currentUser) : BaseController
+public class PaymentController : BaseController
 {
-    /// <summary>
-    /// Generates QR code data for a merchant account.
-    /// </summary>
-    [HttpGet("qr/{accountNumber}")]
-    public async Task<ActionResult<ApiResponse<Application.DTOs.responses.Payments.QrCodeResponse>>> GenerateQrCode(
-        string accountNumber, CancellationToken cancellationToken)
+    private readonly IPaymentService _paymentService;
+    private readonly ICurrentUser _currentUser;
+
+    public PaymentController(IPaymentService paymentService, ICurrentUser currentUser)
     {
-        var result = await paymentService.GenerateQrCodeAsync(accountNumber, cancellationToken);
+        _paymentService = paymentService;
+        _currentUser = currentUser;
+    }
+
+    /// <summary>
+    /// Initiate a wallet top-up via payment gateway.
+    /// </summary>
+    [HttpPost("top-up")]
+    public async Task<ActionResult> TopUp([FromBody] TopUpRequest request, CancellationToken cancellationToken)
+    {
+        var result = await _paymentService.InitiateTopUpAsync(
+            _currentUser.Id,
+            request.AccountId,
+            request.Amount,
+            request.Currency,
+            request.RequestId,
+            cancellationToken);
+
         return result.Success ? Ok(result) : BadRequest(result);
     }
 
     /// <summary>
-    /// Initiates a payment from NFC/QR scan.
+    /// Get payment details by ID.
     /// </summary>
-    [HttpPost("initiate")]
-    public async Task<ActionResult<ApiResponse<Application.DTOs.responses.Transactions.TransactionResponse>>> InitiatePayment(
-        [FromBody] InitiatePaymentRequest request, CancellationToken cancellationToken)
+    [HttpGet("{paymentId}")]
+    public async Task<ActionResult> GetPayment(int paymentId, CancellationToken cancellationToken)
     {
-        var result = await paymentService.InitiatePaymentAsync(request, currentUser.Id, cancellationToken);
+        var result = await _paymentService.GetPaymentAsync(paymentId, _currentUser.Id, cancellationToken);
+        
+        if (!result.Success)
+            return NotFound(result);
+            
+        return Ok(result);
+    }
+
+    /// <summary>
+    /// Manually verify payment status with gateway.
+    /// </summary>
+    [HttpPost("{paymentId}/verify")]
+    public async Task<ActionResult> VerifyPayment(int paymentId, CancellationToken cancellationToken)
+    {
+        var result = await _paymentService.VerifyPaymentStatusAsync(paymentId, cancellationToken);
         return result.Success ? Ok(result) : BadRequest(result);
     }
 
     /// <summary>
-    /// NFC URL handler - redirects to payment page or returns JSON.
+    /// Cancel a pending payment.
     /// </summary>
-    [AllowAnonymous]
-    [HttpGet("pay")]
-    public async Task<ActionResult<ApiResponse<Application.DTOs.responses.Payments.QrCodeResponse>>> Pay(
-        [FromQuery] string to, [FromQuery] string? merchant, [FromQuery] string? name, CancellationToken cancellationToken)
+    [HttpPost("{paymentId}/cancel")]
+    public async Task<ActionResult> CancelPayment(int paymentId, CancellationToken cancellationToken)
     {
-        // This endpoint can be used for NFC URL handling
-        // Returns payment initiation data
-        var result = await paymentService.GenerateQrCodeAsync(to, cancellationToken);
+        var result = await _paymentService.CancelPaymentAsync(paymentId, _currentUser.Id, cancellationToken);
         return result.Success ? Ok(result) : BadRequest(result);
     }
 }

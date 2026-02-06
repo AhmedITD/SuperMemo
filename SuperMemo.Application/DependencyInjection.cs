@@ -45,6 +45,9 @@ public static class DependencyInjection
         services.AddScoped<IProfileService, ProfileService>();
         services.AddScoped<IAdminDashboardService, AdminDashboardService>();
         
+        // Phase 9 - Payment Gateway services
+        services.AddScoped<IPaymentService, PaymentService>();
+        
         TypeAdapterConfig.GlobalSettings.Scan(typeof(DependencyInjection).Assembly);
         services.AddValidatorsFromAssembly(typeof(DependencyInjection).Assembly);
 

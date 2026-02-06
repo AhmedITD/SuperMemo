@@ -97,6 +97,9 @@ builder.Services.AddScoped<IJwtTokenGenerator, JwtTokenGenerator>();
 builder.Services.AddScoped<IRefreshTokenService, RefreshTokenService>();
 builder.Services.AddScoped<ICurrentUser, CurrentUser>();
 
+// Phase 9 - Payment Gateway services
+builder.Services.AddHttpClient<SuperMemo.Application.Interfaces.Payments.IQiCardService, QiCardService>();
+
 builder.Services.Configure<PayrollOptions>(builder.Configuration.GetSection(PayrollOptions.SectionName));
 builder.Services.AddScoped<IPayrollRunnerService, PayrollRunnerService>();
 builder.Services.AddHostedService<PayrollRunnerHostedService>();
@@ -123,6 +126,9 @@ builder.Services.Configure<StorageOptions>(options =>
 builder.Services.AddScoped<IStorageService, FileStorageService>();
 
 builder.Services.AddHttpClient<IOtpiqService, OtpiqService>();
+
+// Phase 9 - Payment Gateway services
+builder.Services.AddHttpClient<SuperMemo.Application.Interfaces.Payments.IQiCardService, SuperMemo.Infrastructure.Services.QiCardService>();
 
 builder.Services.AddAuthorization(options =>
 {

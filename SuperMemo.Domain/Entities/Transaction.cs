@@ -14,6 +14,12 @@ public class Transaction : BaseEntity
     /// <summary>Client-provided key to prevent duplicate transfers. Unique per from-account (or scope).</summary>
     public string? IdempotencyKey { get; set; }
     
+    /// <summary>Category of transaction: Transfer, TopUp, Withdraw, or Interest.</summary>
+    public TransactionCategory Category { get; set; } = TransactionCategory.Transfer;
+    
+    /// <summary>Linked payment record (for TOP_UP transactions).</summary>
+    public int? PaymentId { get; set; }
+    
     // Enhanced fields for advanced features
     /// <summary>Reason for transaction failure (if status is Failed).</summary>
     public FailureReason? FailureReason { get; set; }
@@ -27,4 +33,5 @@ public class Transaction : BaseEntity
     public DateTime? StatusChangedAt { get; set; }
 
     public Account FromAccount { get; set; } = null!;
+    public Payment? Payment { get; set; }
 }

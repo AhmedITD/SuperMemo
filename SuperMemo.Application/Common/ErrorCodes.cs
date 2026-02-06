@@ -34,4 +34,14 @@ public static class ErrorCodes
     public const string DailyLimitExceeded = "DAILY_LIMIT_EXCEEDED";
     public const string InvalidAccountType = "INVALID_ACCOUNT_TYPE";
     public const string AccountTypeImmutable = "ACCOUNT_TYPE_IMMUTABLE";
+    
+    // Phase 9 - Payment Gateway error codes
+    public const string PaymentInitiationFailed = "PAYMENT_INITIATION_FAILED";
+    public const string PaymentVerificationFailed = "PAYMENT_VERIFICATION_FAILED";
+    public const string PaymentCancellationFailed = "PAYMENT_CANCELLATION_FAILED";
+    public const string InvalidWebhookSignature = "INVALID_WEBHOOK_SIGNATURE";
+    public const string PaymentAlreadyProcessed = "PAYMENT_ALREADY_PROCESSED";
+    public const string PaymentAmountMismatch = "PAYMENT_AMOUNT_MISMATCH";
+    public const string InvalidOperation = "INVALID_OPERATION";
+    public const string InternalError = "INTERNAL_ERROR";
 }

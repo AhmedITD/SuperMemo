@@ -30,4 +30,5 @@ public class Account : BaseEntity
     public User User { get; set; } = null!;
     public ICollection<Card> Cards { get; set; } = new List<Card>();
     public ICollection<Transaction> OutgoingTransactions { get; set; } = new List<Transaction>();
+    public ICollection<Payment> Payments { get; set; } = new List<Payment>();
 }

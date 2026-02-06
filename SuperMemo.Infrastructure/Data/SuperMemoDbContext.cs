@@ -28,6 +28,10 @@ public class SuperMemoDbContext : DbContext, ISuperMemoDbContext
     public DbSet<MerchantAccount> MerchantAccounts { get; set; }
     public DbSet<FraudDetectionRule> FraudDetectionRules { get; set; }
     public DbSet<TransactionStatusHistory> TransactionStatusHistory { get; set; }
+    
+    // Payment gateway entities
+    public DbSet<Payment> Payments { get; set; }
+    public DbSet<PaymentWebhookLog> PaymentWebhookLogs { get; set; }
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
