@@ -30,15 +30,33 @@ namespace SuperMemo.Infrastructure.Migrations
                 });
 
             migrationBuilder.CreateTable(
+                name: "PhoneVerificationCodes",
+                columns: table => new
+                {
+                    Id = table.Column<int>(type: "integer", nullable: false)
+                        .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn),
+                    PhoneNumber = table.Column<string>(type: "character varying(20)", maxLength: 20, nullable: false),
+                    Code = table.Column<string>(type: "character varying(6)", maxLength: 6, nullable: false),
+                    ExpiresAt = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
+                    VerifiedAt = table.Column<DateTime>(type: "timestamp with time zone", nullable: true),
+                    IsUsed = table.Column<bool>(type: "boolean", nullable: false),
+                    IpAddress = table.Column<string>(type: "character varying(45)", maxLength: 45, nullable: true),
+                    CreatedAt = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
+                    UpdatedAt = table.Column<DateTime>(type: "timestamp with time zone", nullable: true)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_PhoneVerificationCodes", x => x.Id);
+                });
+
+            migrationBuilder.CreateTable(
                 name: "Users",
                 columns: table => new
                 {
                     Id = table.Column<int>(type: "integer", nullable: false)
                         .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn),
-                    FirstName = table.Column<string>(type: "character varying(100)", maxLength: 100, nullable: false),
-                    LastName = table.Column<string>(type: "character varying(100)", maxLength: 100, nullable: false),
-                    Email = table.Column<string>(type: "character varying(256)", maxLength: 256, nullable: false),
-                    Phone = table.Column<string>(type: "text", nullable: true),
+                    FullName = table.Column<string>(type: "character varying(200)", maxLength: 200, nullable: false),
+                    Phone = table.Column<string>(type: "character varying(20)", maxLength: 20, nullable: false),
                     PasswordHash = table.Column<string>(type: "text", nullable: false),
                     Role = table.Column<int>(type: "integer", nullable: false),
                     KycStatus = table.Column<int>(type: "integer", nullable: false),
@@ -92,6 +110,7 @@ namespace SuperMemo.Infrastructure.Migrations
                     MotherFullName = table.Column<string>(type: "character varying(200)", maxLength: 200, nullable: false),
                     BirthDate = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
                     BirthLocation = table.Column<string>(type: "character varying(200)", maxLength: 200, nullable: false),
+                    ImageUrl = table.Column<string>(type: "character varying(2048)", maxLength: 2048, nullable: true),
                     Status = table.Column<int>(type: "integer", nullable: false),
                     CreatedAt = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
                     UpdatedAt = table.Column<DateTime>(type: "timestamp with time zone", nullable: true)
@@ -118,6 +137,7 @@ namespace SuperMemo.Infrastructure.Migrations
                     FullFamilyName = table.Column<string>(type: "character varying(200)", maxLength: 200, nullable: false),
                     LivingLocation = table.Column<string>(type: "character varying(200)", maxLength: 200, nullable: false),
                     FormNumber = table.Column<string>(type: "character varying(50)", maxLength: 50, nullable: false),
+                    ImageUrl = table.Column<string>(type: "character varying(2048)", maxLength: 2048, nullable: true),
                     Status = table.Column<int>(type: "integer", nullable: false),
                     CreatedAt = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
                     UpdatedAt = table.Column<DateTime>(type: "timestamp with time zone", nullable: true)
@@ -147,6 +167,7 @@ namespace SuperMemo.Infrastructure.Migrations
                     BirthDate = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
                     MotherFullName = table.Column<string>(type: "character varying(200)", maxLength: 200, nullable: false),
                     ExpiryDate = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
+                    ImageUrl = table.Column<string>(type: "character varying(2048)", maxLength: 2048, nullable: true),
                     Status = table.Column<int>(type: "integer", nullable: false),
                     CreatedAt = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
                     UpdatedAt = table.Column<DateTime>(type: "timestamp with time zone", nullable: true)
@@ -295,22 +316,35 @@ namespace SuperMemo.Infrastructure.Migrations
             migrationBuilder.CreateIndex(
                 name: "IX_IcDocuments_UserId",
                 table: "IcDocuments",
-                column: "UserId");
+                column: "UserId",
+                unique: true);
 
             migrationBuilder.CreateIndex(
                 name: "IX_LivingIdentityDocuments_UserId",
                 table: "LivingIdentityDocuments",
-                column: "UserId");
+                column: "UserId",
+                unique: true);
 
             migrationBuilder.CreateIndex(
                 name: "IX_PassportDocuments_UserId",
                 table: "PassportDocuments",
-                column: "UserId");
+                column: "UserId",
+                unique: true);
 
             migrationBuilder.CreateIndex(
                 name: "IX_PayrollJobs_EmployeeUserId",
                 table: "PayrollJobs",
                 column: "EmployeeUserId");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_PhoneVerificationCodes_PhoneNumber",
+                table: "PhoneVerificationCodes",
+                column: "PhoneNumber");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_PhoneVerificationCodes_PhoneNumber_Code_IsUsed",
+                table: "PhoneVerificationCodes",
+                columns: new[] { "PhoneNumber", "Code", "IsUsed" });
 
             migrationBuilder.CreateIndex(
                 name: "IX_RefreshTokens_TokenHash",
@@ -331,9 +365,9 @@ namespace SuperMemo.Infrastructure.Migrations
                 filter: "\"IdempotencyKey\" IS NOT NULL AND \"IdempotencyKey\" != ''");
 
             migrationBuilder.CreateIndex(
-                name: "IX_Users_Email",
+                name: "IX_Users_Phone",
                 table: "Users",
-                column: "Email",
+                column: "Phone",
                 unique: true,
                 filter: "\"IsDeleted\" = false");
         }
@@ -358,6 +392,9 @@ namespace SuperMemo.Infrastructure.Migrations
 
             migrationBuilder.DropTable(
                 name: "PayrollJobs");
+
+            migrationBuilder.DropTable(
+                name: "PhoneVerificationCodes");
 
             migrationBuilder.DropTable(
                 name: "RefreshTokens");

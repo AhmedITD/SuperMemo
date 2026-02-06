@@ -44,7 +44,7 @@ public class PaymentInitiationService(
         {
             // Generate merchant ID if not exists
             merchantId = $"M{account.Id:D6}";
-            merchantName = account.User.FirstName + " " + account.User.LastName;
+            merchantName = account.User.FullName;
         }
 
         // Generate QR code data (simple format: payment://account/{accountNumber}?merchant={merchantId})
