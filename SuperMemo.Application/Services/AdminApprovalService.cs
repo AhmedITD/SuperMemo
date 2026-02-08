@@ -86,7 +86,7 @@ public class AdminApprovalService(ISuperMemoDbContext db, IAuditEventLogger audi
                 {
                     UserId = user.Id,
                     Balance = 0,
-                    Currency = "USD",
+                    Currency = "IQD",
                     Status = AccountStatus.Active,
                     AccountNumber = "SM" + Guid.NewGuid().ToString("N")[..16]
                 };

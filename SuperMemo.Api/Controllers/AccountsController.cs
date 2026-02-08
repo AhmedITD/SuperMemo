@@ -11,7 +11,10 @@ namespace SuperMemo.Api.Controllers;
 
 [Authorize]
 [Route("api/accounts")]
-public class AccountsController(IAccountService accountService, ICardService cardService, Application.Interfaces.Auth.ICurrentUser currentUser) : BaseController
+public class AccountsController(
+    IAccountService accountService,
+    ICardService cardService,
+    Application.Interfaces.Auth.ICurrentUser currentUser) : BaseController
 {
     [HttpGet("me")]
     public async Task<ActionResult<ApiResponse<AccountResponse>>> GetMyAccount(CancellationToken cancellationToken)

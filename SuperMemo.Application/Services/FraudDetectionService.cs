@@ -96,9 +96,8 @@ public class FraudDetectionService(ISuperMemoDbContext db) : IFraudDetectionServ
 
     public async Task<bool> CheckNewDeviceAsync(int userId, DeviceInfo deviceInfo, CancellationToken cancellationToken = default)
     {
-        // Simplified: In a real system, you'd track device history in a separate table
-        // For now, we'll check if this is the user's first transaction today
-        // This is a placeholder - implement proper device tracking as needed
+        // Simplified heuristic: treat "no transaction today" as possible new device for risk scoring.
+        // Production could use a Device table keyed by fingerprint/IP and track first-seen per user.
         var today = DateTime.UtcNow.Date;
         var hasRecentTransaction = await db.Transactions
             .AnyAsync(t => t.FromAccount!.UserId == userId && t.CreatedAt >= today, cancellationToken);

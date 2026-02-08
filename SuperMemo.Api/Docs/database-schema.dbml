@@ -1,0 +1,232 @@
+// SuperMemo Database Schema (DBML)
+// Use at https://dbdiagram.io to render the diagram
+
+Project SuperMemo {
+  database_type: 'PostgreSQL'
+  Note: 'SuperMemo banking/account API schema'
+}
+
+Table Users {
+  Id int [pk, increment, not null]
+  FullName varchar(200) [not null]
+  Phone varchar(20) [not null, unique]
+  PasswordHash text [not null]
+  Role int [not null]
+  ImageUrl varchar(2048)
+  KycStatus int [not null]
+  KybStatus int [not null]
+  ApprovalStatus int [not null]
+  UpdatedBy int
+  IsDeleted boolean [not null, default: false]
+  DeletedAt datetime
+  CreatedAt datetime [not null]
+  UpdatedAt datetime
+}
+
+Table Accounts {
+  Id int [pk, increment, not null]
+  UserId int [not null, ref: > Users.Id]
+  Balance decimal(18,4) [not null]
+  Currency varchar(3) [not null]
+  Status int [not null]
+  AccountNumber varchar(34) [not null, unique]
+  AccountType int [not null]
+  DailySpendingLimit decimal(18,4)
+  DailySpentAmount decimal(18,4) [default: 0]
+  LastInterestCalculationDate datetime
+  LastDailyLimitResetDate datetime
+  CreatedAt datetime [not null]
+  UpdatedAt datetime
+}
+
+Table Cards {
+  Id int [pk, increment, not null]
+  AccountId int [not null, ref: > Accounts.Id]
+  Number varchar(19) [not null, unique]
+  Type int [not null]
+  ExpiryDate datetime [not null]
+  ScHashed text [not null]
+  IsActive boolean [not null]
+  IsExpired boolean [not null]
+  IsEmployeeCard boolean [not null]
+  CreatedAt datetime [not null]
+  UpdatedAt datetime
+}
+
+Table Transactions {
+  Id int [pk, increment, not null]
+  FromAccountId int [not null, ref: > Accounts.Id]
+  ToAccountNumber varchar(34) [not null]
+  Amount decimal(18,4) [not null]
+  TransactionType int [not null]
+  Status int [not null]
+  Purpose text
+  IdempotencyKey varchar(64)
+  Category int [not null]
+  PaymentId int [ref: > Payments.Id]
+  FailureReason int
+  RetryCount int [default: 0]
+  RiskScore int
+  RiskLevel int
+  StatusChangedAt datetime
+  CreatedAt datetime [not null]
+  UpdatedAt datetime
+}
+
+Table Payments {
+  Id int [pk, increment, not null]
+  UserId int [not null, ref: > Users.Id]
+  AccountId int [not null, ref: > Accounts.Id]
+  PaymentGateway varchar [not null]
+  GatewayPaymentId varchar
+  RequestId varchar [not null]
+  Amount decimal(18,4) [not null]
+  Currency varchar [not null]
+  Status int [not null]
+  PaymentUrl text
+  TransactionId int [ref: - Transactions.Id]
+  GatewayResponse text
+  WebhookReceived boolean [default: false]
+  WebhookData text
+  CreatedAt datetime [not null]
+  UpdatedAt datetime
+}
+
+Table PaymentWebhookLogs {
+  Id int [pk, increment, not null]
+  PaymentId int [not null, ref: > Payments.Id]
+  WebhookPayload text [not null]
+  Signature varchar
+  SignatureValid boolean [not null]
+  Processed boolean [default: false]
+  ProcessedAt datetime
+  ErrorMessage text
+  CreatedAt datetime [not null]
+  UpdatedAt datetime
+}
+
+Table RefreshTokens {
+  Id uuid [pk, not null]
+  TokenHash varchar [not null]
+  UserId int [not null, ref: > Users.Id]
+  ExpiresAt datetime [not null]
+  CreatedAt datetime [not null]
+  RevokedAt datetime
+  DeviceClientId varchar
+  IpAddress varchar
+  ReplacedByTokenHash varchar
+}
+
+Table AuditLogs {
+  Id uuid [pk, not null]
+  UserId int [ref: > Users.Id]
+  EntityType varchar [not null]
+  EntityId varchar [not null]
+  Action varchar [not null]
+  Changes text [not null]
+  Timestamp datetime [not null]
+}
+
+Table IcDocuments {
+  Id int [pk, increment, not null]
+  UserId int [not null, ref: > Users.Id]
+  IdentityCardNumber varchar(50) [not null]
+  FullName varchar(200) [not null]
+  MotherFullName varchar(200) [not null]
+  BirthDate datetime [not null]
+  BirthLocation varchar(200) [not null]
+  ImageUrl varchar(2048)
+  Status int [not null]
+  CreatedAt datetime [not null]
+  UpdatedAt datetime
+}
+
+Table PassportDocuments {
+  Id int [pk, increment, not null]
+  UserId int [not null, ref: > Users.Id]
+  PassportNumber varchar(50) [not null]
+  FullName varchar(200) [not null]
+  ShortName varchar(100)
+  Nationality varchar(100) [not null]
+  BirthDate datetime [not null]
+  MotherFullName varchar(200) [not null]
+  ExpiryDate datetime [not null]
+  ImageUrl varchar(2048)
+  Status int [not null]
+  CreatedAt datetime [not null]
+  UpdatedAt datetime
+}
+
+Table LivingIdentityDocuments {
+  Id int [pk, increment, not null]
+  UserId int [not null, ref: > Users.Id]
+  SerialNumber varchar(50) [not null]
+  FullFamilyName varchar(200) [not null]
+  LivingLocation varchar(200) [not null]
+  FormNumber varchar(50) [not null]
+  ImageUrl varchar(2048)
+  Status int [not null]
+  CreatedAt datetime [not null]
+  UpdatedAt datetime
+}
+
+Table PayrollJobs {
+  Id int [pk, increment, not null]
+  EmployeeUserId int [not null, ref: > Users.Id]
+  EmployerId varchar
+  Amount decimal(18,4) [not null]
+  Currency varchar [not null]
+  Schedule varchar
+  NextRunAt datetime
+  Status int [not null]
+  CreatedAt datetime [not null]
+  UpdatedAt datetime
+}
+
+Table PhoneVerificationCodes {
+  Id int [pk, increment, not null]
+  PhoneNumber varchar [not null]
+  Code varchar [not null]
+  ExpiresAt datetime [not null]
+  VerifiedAt datetime
+  IsUsed boolean [not null]
+  IpAddress varchar
+  CreatedAt datetime [not null]
+  UpdatedAt datetime
+}
+
+Table MerchantAccounts {
+  Id int [pk, increment, not null]
+  AccountId int [not null, ref: > Accounts.Id]
+  MerchantId varchar [not null]
+  MerchantName varchar [not null]
+  QrCodeData text
+  NfcUrl varchar
+  IsActive boolean [not null]
+  CreatedAt datetime [not null]
+  UpdatedAt datetime
+}
+
+Table FraudDetectionRules {
+  Id int [pk, increment, not null]
+  RuleName varchar [not null]
+  RuleType varchar [not null]
+  ThresholdValue decimal(18,4)
+  ThresholdCount int
+  TimeWindow interval
+  IsActive boolean [not null]
+  CreatedAt datetime [not null]
+  UpdatedAt datetime
+}
+
+Table TransactionStatusHistory {
+  Id int [pk, increment, not null]
+  TransactionId int [not null, ref: > Transactions.Id]
+  OldStatus int [not null]
+  NewStatus int [not null]
+  ChangedAt datetime [not null]
+  ChangedBy int
+  Reason text
+  CreatedAt datetime [not null]
+  UpdatedAt datetime
+}

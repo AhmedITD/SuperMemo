@@ -102,7 +102,7 @@ public class AnalyticsService(ISuperMemoDbContext db) : IAnalyticsService
         for (int i = 5; i >= 0; i--)
         {
             var monthDate = now.AddMonths(-i);
-            var monthStart = new DateTime(monthDate.Year, monthDate.Month, 1);
+            var monthStart = new DateTime(monthDate.Year, monthDate.Month, 1, 0, 0, 0, DateTimeKind.Utc);
             var monthEnd = monthStart.AddMonths(1).AddDays(-1);
 
             var balance = await GetBalanceAtDateAsync(account.Id, monthEnd, cancellationToken);
@@ -163,6 +163,9 @@ public class AnalyticsService(ISuperMemoDbContext db) : IAnalyticsService
 
     private async Task<decimal> GetBalanceAtDateAsync(int accountId, DateTime date, CancellationToken cancellationToken)
     {
+        if (date.Kind != DateTimeKind.Utc)
+            date = DateTime.SpecifyKind(date, DateTimeKind.Utc);
+
         // Get initial balance (account creation balance, typically 0)
         var account = await db.Accounts.FirstOrDefaultAsync(a => a.Id == accountId, cancellationToken);
         if (account == null) return 0;

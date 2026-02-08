@@ -24,6 +24,12 @@ using SuperMemo.Infrastructure.Services;
 using SuperMemo.Infrastructure.Services.Auth;
 using SuperMemo.Infrastructure.Services.Sinks;
 using SuperMemo.Infrastructure.Services.Storage;
+using Hangfire;
+using Hangfire.PostgreSql;
+using Microsoft.Extensions.DependencyInjection;
+using SuperMemo.Api.Hangfire;
+using SuperMemo.Application.Interfaces.Accounts;
+using SuperMemo.Application.Interfaces.Payments;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -113,6 +119,15 @@ builder.Services.AddHostedService<SuperMemo.Infrastructure.Services.TransactionA
 builder.Services.AddHostedService<SuperMemo.Infrastructure.Services.InterestCalculationHostedService>();
 builder.Services.AddHostedService<SuperMemo.Infrastructure.Services.DailyLimitResetHostedService>();
 
+// Hangfire (recurring jobs: failed payment refund, balance bonus)
+var hangfireConnection = builder.Configuration.GetConnectionString("DefaultConnection");
+builder.Services.AddHangfire(config => config
+    .SetDataCompatibilityLevel(CompatibilityLevel.Version_180)
+    .UseSimpleAssemblyNameTypeSerializer()
+    .UseRecommendedSerializerSettings()
+    .UsePostgreSqlStorage(c => c.UseNpgsqlConnection(hangfireConnection!)));
+builder.Services.AddHangfireServer();
+
 // Storage: resolve paths to content root so uploads are under the app directory
 builder.Services.Configure<StorageOptions>(options =>
 {
@@ -174,6 +189,25 @@ builder.Services.AddCors(options =>
 
 var app = builder.Build();
 
+// Seed database when enabled (e.g. "SeedDatabase": true in appsettings.Development.json or Development environment)
+var seedDatabase = app.Configuration.GetValue<bool>("SeedDatabase") || app.Environment.IsDevelopment();
+if (seedDatabase)
+{
+    try
+    {
+        using var scope = app.Services.CreateScope();
+        var db = scope.ServiceProvider.GetRequiredService<SuperMemoDbContext>();
+        var passwordService = scope.ServiceProvider.GetRequiredService<SuperMemo.Application.Interfaces.Auth.IPasswordService>();
+        var seeder = new DataSeeder(db, passwordService);
+        await seeder.SeedAsync();
+    }
+    catch (Exception ex)
+    {
+        var logger = app.Services.GetRequiredService<Microsoft.Extensions.Logging.ILogger<Program>>();
+        logger.LogWarning(ex, "Database seeding failed or skipped (e.g. DB not available).");
+    }
+}
+
 app.UseCors();
 // Serve uploaded KYC images from /uploads/kyc
 var storageSection = app.Configuration.GetSection(StorageOptions.SectionName);
@@ -194,9 +228,24 @@ if (!app.Environment.IsDevelopment())
 app.UseAuthentication();
 app.UseAuthorization();
 
+app.UseHangfireDashboard("/hangfire", new DashboardOptions
+{
+    Authorization = new[] { new HangfireAuthorizationFilter() }
+});
+
 app.UseExceptionHandler(_ => { });
 
 app.MapControllers();
+
+// Recurring jobs (every 24 hours / daily at midnight UTC)
+RecurringJob.AddOrUpdate<IFailedPaymentRefundService>(
+    "failed-payment-refund",
+    s => s.ProcessFailedPaymentsAsync(CancellationToken.None),
+    Cron.Daily);
+RecurringJob.AddOrUpdate<IBalanceBonusService>(
+    "balance-bonus",
+    s => s.ProcessAllAccountsAsync(CancellationToken.None),
+    Cron.Daily);
 
 app.Run();
 

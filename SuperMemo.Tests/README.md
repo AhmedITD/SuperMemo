@@ -1,42 +1,33 @@
-# SuperMemo Tests
+# SuperMemo API Integration Tests
 
-This project contains unit and integration tests for the SuperMemo Virtual Banking API.
+Tests all backend API endpoints using `WebApplicationFactory` (in-process server).
 
-## Test Structure
+## Prerequisites
 
-- **Unit Tests** (`Unit/`): Test individual services and business logic in isolation
-- **Integration Tests** (`Integration/`): Test full HTTP request/response cycles with test database
+- **PostgreSQL** running with the SuperMemo database (same as API).
+- **Seeded data**: Run the API once with `SeedDatabase: true` (or use Development) so that test users exist:
+  - **Customer:** phone `11111111111`, password `Customer@123`
+  - **Admin:** phone `00000000000`, password `Admin@123`
 
-## Running Tests
+## Run tests
 
-### Run all tests
-```bash
-dotnet test
-```
+From the solution root:
 
-### Run specific test project
 ```bash
 dotnet test SuperMemo.Tests/SuperMemo.Tests.csproj
 ```
 
-### Run with coverage
-```bash
-dotnet test --collect:"XPlat Code Coverage"
-```
+Or from Visual Studio / Rider: run all tests in the SuperMemo.Tests project.
 
-## Test Categories
+## What is tested
 
-- **Unit Tests**: Fast, isolated tests using mocks and in-memory database
-- **Integration Tests**: Full API tests using WebApplicationFactory and test database
-
-## Setup
-
-1. Ensure test database is configured (or use in-memory for unit tests)
-2. Run migrations on test database if needed
-3. Configure test appsettings if required
-
-## Notes
-
-- Integration tests require a test database (PostgreSQL or in-memory)
-- Some tests may need test data seeding
-- Authentication tests require proper JWT setup
+- **Auth:** login (valid/invalid), refresh, Me (unauthorized), send-verification / forgot-password / reset-password not covered by these tests.
+- **Accounts:** GET /api/accounts/me (with token, without token).
+- **User cards:** GET/POST /api/user/cards (with customer token).
+- **Profile:** GET/PUT /api/profile (with customer token).
+- **Transactions:** GET by account, POST transfer (with customer token).
+- **Dashboard:** GET /api/dashboard (with customer token).
+- **Analytics:** overview, balance-trend, transactions, transactions-list (with customer token).
+- **KYC:** GET /api/kyc/status (with customer token).
+- **Payments:** POST /api/payments/top-up (with customer token).
+- **Admin:** GET /api/admin/users, dashboard/metrics, dashboard/users, payroll list, transactions/risk-review (with admin token); GET /api/admin/users with customer token returns 403.

@@ -8,5 +8,6 @@ public enum PaymentStatus
     Pending = 0,     // Payment initiated, awaiting gateway response
     Completed = 1,  // Payment successfully completed
     Failed = 2,     // Payment failed
-    Cancelled = 3   // Payment was cancelled
+    Cancelled = 3,  // Payment was cancelled
+    Refunded = 4    // Failed payment refunded to account
 }

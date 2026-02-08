@@ -16,6 +16,8 @@ public static class ErrorCodes
     public const string InsufficientFunds = "INSUFFICIENT_FUNDS";
     public const string CardNumberExists = "CARD_NUMBER_EXISTS";
     public const string CardExpired = "CARD_EXPIRED";
+    /// <summary>Account has reached the maximum number of active cards allowed.</summary>
+    public const string MaxCardsExceeded = "MAX_CARDS_EXCEEDED";
     /// <summary>No active, non-expired card on the source account (required for transfers).</summary>
     public const string NoActiveCard = "NO_ACTIVE_CARD";
     public const string ValidationFailed = "VALIDATION_FAILED";

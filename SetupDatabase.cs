@@ -42,7 +42,10 @@ class Program
                     await using var termCmd = new NpgsqlCommand(terminateConnections, adminConnection);
                     await termCmd.ExecuteNonQueryAsync();
                 }
-                catch { }
+                catch
+                {
+                    // Terminate can fail if DB doesn't exist yet or no connections; ignore and proceed to create.
+                }
 
                 var createDbCmd = $"CREATE DATABASE \"{targetDatabase}\";";
                 await using var createCmd = new NpgsqlCommand(createDbCmd, adminConnection);

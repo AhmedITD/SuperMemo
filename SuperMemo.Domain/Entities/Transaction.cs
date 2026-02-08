@@ -11,7 +11,6 @@ public class Transaction : BaseEntity
     public TransactionType TransactionType { get; set; } = TransactionType.Debit;
     public TransactionStatus Status { get; set; } = TransactionStatus.Created;
     public string? Purpose { get; set; }
-    /// <summary>Client-provided key to prevent duplicate transfers. Unique per from-account (or scope).</summary>
     public string? IdempotencyKey { get; set; }
     
     /// <summary>Category of transaction: Transfer, TopUp, Withdraw, or Interest.</summary>

@@ -1,3 +1,4 @@
+using System.Text.Json.Serialization;
 using SuperMemo.Domain.Entities.Common;
 using SuperMemo.Domain.Enums;
 using SuperMemo.Domain.Interfaces;
@@ -8,7 +9,10 @@ public class User : BaseEntity, IAuditable, ISoftDeletable
 {
     public required string FullName { get; set; }
     public required string Phone { get; set; }
-    public required string PasswordHash { get; set; }
+
+    /// <summary>Hashed in backend only; never serialized to API responses.</summary>
+    [JsonIgnore]
+    public string PasswordHash { get; set; } = null!;
     public UserRole Role { get; set; }
     /// <summary>Optional profile/avatar image URL (stored in external storage).</summary>
     public string? ImageUrl { get; set; }

@@ -1,4 +1,3 @@
-using System.Text.Json;
 using FluentValidation;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -37,38 +36,6 @@ public class AuthController(IAuthService authService, IStorageService storageSer
             userImageUrl = urlResult.Url;
         }
 
-        var icDoc = ParseDocumentJson<RegisterIcDocumentDto>(form.IcDocumentJson);
-        var passportDoc = ParseDocumentJson<RegisterPassportDocumentDto>(form.PassportDocumentJson);
-        var livingDoc = ParseDocumentJson<RegisterLivingIdentityDocumentDto>(form.LivingIdentityDocumentJson);
-
-        if (form.IcDocumentImage != null)
-        {
-            var urlResult = await UploadKycImageAsync(form.IcDocumentImage, cancellationToken);
-            if (urlResult.Error != null)
-                return BadRequest(ApiResponse<RegisterResponse>.ErrorResponse(urlResult.Error));
-            if (icDoc == null)
-                return BadRequest(ApiResponse<RegisterResponse>.ErrorResponse("IcDocument metadata (JSON) is required when uploading an IC document image."));
-            icDoc.ImageUrl = urlResult.Url;
-        }
-        if (form.PassportDocumentImage != null)
-        {
-            var urlResult = await UploadKycImageAsync(form.PassportDocumentImage, cancellationToken);
-            if (urlResult.Error != null)
-                return BadRequest(ApiResponse<RegisterResponse>.ErrorResponse(urlResult.Error));
-            if (passportDoc == null)
-                return BadRequest(ApiResponse<RegisterResponse>.ErrorResponse("PassportDocument metadata (JSON) is required when uploading a passport image."));
-            passportDoc.ImageUrl = urlResult.Url;
-        }
-        if (form.LivingIdentityDocumentImage != null)
-        {
-            var urlResult = await UploadKycImageAsync(form.LivingIdentityDocumentImage, cancellationToken);
-            if (urlResult.Error != null)
-                return BadRequest(ApiResponse<RegisterResponse>.ErrorResponse(urlResult.Error));
-            if (livingDoc == null)
-                return BadRequest(ApiResponse<RegisterResponse>.ErrorResponse("LivingIdentityDocument metadata (JSON) is required when uploading a living identity image."));
-            livingDoc.ImageUrl = urlResult.Url;
-        }
-
         var request = new RegisterRequest
         {
             FullName = form.FullName.Trim(),
@@ -76,45 +43,15 @@ public class AuthController(IAuthService authService, IStorageService storageSer
             Password = form.Password,
             VerificationCode = form.VerificationCode,
             ImageUrl = userImageUrl,
-            IcDocument = icDoc,
-            PassportDocument = passportDoc,
-            LivingIdentityDocument = livingDoc
+            IcDocument = null,
+            PassportDocument = null,
+            LivingIdentityDocument = null
         };
         var validation = await registerValidator.ValidateAsync(request, cancellationToken);
         if (!validation.IsValid)
             return BadRequest(ApiResponse<RegisterResponse>.ErrorResponse("Validation failed.", validation.Errors.GroupBy(e => e.PropertyName).ToDictionary(g => g.Key, g => g.Select(e => e.ErrorMessage).ToArray()!), ErrorCodes.ValidationFailed));
         var result = await authService.Register(request, cancellationToken);
         return result.Success ? Created($"/User/{result.Data!.Id}", result) : BadRequest(result);
-    }
-
-    private static T? ParseDocumentJson<T>(string? json) where T : class
-    {
-        if (string.IsNullOrWhiteSpace(json)) return null;
-        try
-        {
-            return JsonSerializer.Deserialize<T>(json);
-        }
-        catch
-        {
-            return null;
-        }
-    }
-
-    private async Task<(string? Url, string? Error)> UploadKycImageAsync(IFormFile file, CancellationToken cancellationToken)
-    {
-        if (file.Length == 0)
-            return (null, "Image file is empty.");
-        if (file.Length > MaxImageSizeBytes)
-            return (null, $"Image size must not exceed {MaxImageSizeBytes / (1024 * 1024)} MB.");
-        var contentType = file.ContentType ?? "image/jpeg";
-        if (!AllowedImageTypes.Contains(contentType, StringComparer.OrdinalIgnoreCase))
-            return (null, "Only image/jpeg, image/png and image/webp are allowed.");
-        var fileName = file.FileName;
-        if (string.IsNullOrWhiteSpace(fileName))
-            fileName = "image.jpg";
-        await using var stream = file.OpenReadStream();
-        var url = await storageService.SaveKycImageAsync(stream, fileName, contentType, cancellationToken);
-        return (url, null);
     }
 
     private async Task<(string? Url, string? Error)> UploadUserImageAsync(IFormFile file, CancellationToken cancellationToken)
@@ -135,21 +72,21 @@ public class AuthController(IAuthService authService, IStorageService storageSer
     }
 
     [HttpPost("login")]
-    public async Task<ActionResult<LoginResponse>> Login(LoginRequest request, CancellationToken cancellationToken)
+    public async Task<ActionResult<LoginResponse>> Login([FromBody] LoginRequest request, CancellationToken cancellationToken)
     {
         var result = await authService.Login(request, cancellationToken);
         return result.Success ? Ok(result) : BadRequest(result);
     }
 
     [HttpPost("refresh")]
-    public async Task<ActionResult<LoginResponse>> Refresh(RefreshTokenRequest request, CancellationToken cancellationToken)
+    public async Task<ActionResult<LoginResponse>> Refresh([FromBody] RefreshTokenRequest request, CancellationToken cancellationToken)
     {
         var result = await authService.Refresh(request, cancellationToken);
         return result.Success ? Ok(result) : BadRequest(result);
     }
 
     [HttpPost("logout")]
-    public async Task<ActionResult<ApiResponse<object>>> Logout(LogoutRequest request, CancellationToken cancellationToken)
+    public async Task<ActionResult<ApiResponse<object>>> Logout([FromBody] LogoutRequest request, CancellationToken cancellationToken)
     {
         var result = await authService.Logout(request, cancellationToken);
         return Ok(result);
